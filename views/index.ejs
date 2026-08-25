@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Парсер Авито</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 50px;
+      text-align: center;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 28px;
+    }
+
+    p {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .field-group {
+      text-align: left;
+      margin-bottom: 10px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field-label {
+      display: block;
+      color: #444;
+      font-size: 13px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .field-input {
+      width: 100%;
+      border: 1px solid #d4d8e7;
+      border-radius: 5px;
+      padding: 12px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .field-input:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      color: #444;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    .hint {
+      margin: 0 0 14px;
+      color: #666;
+      font-size: 12px;
+      text-align: left;
+      line-height: 1.4;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      flex-direction: column;
+    }
+
+    button,
+    a {
+      padding: 15px 30px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s ease;
+      font-weight: 600;
+    }
+
+    .btn-parse {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-parse:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-results {
+      background: #764ba2;
+      color: white;
+    }
+
+    .btn-results:hover {
+      background: #663a8a;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(118, 75, 162, 0.3);
+    }
+
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      display: none;
+      font-size: 14px;
+    }
+
+    .status.loading {
+      display: block;
+      background: #e3f2fd;
+      color: #1976d2;
+      border-left: 4px solid #1976d2;
+    }
+
+    .status.success {
+      display: block;
+      background: #e8f5e9;
+      color: #388e3c;
+      border-left: 4px solid #388e3c;
+    }
+
+    .status.error {
+      display: block;
+      background: #ffebee;
+      color: #c62828;
+      border-left: 4px solid #c62828;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #1976d2;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .field-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🔍 Парсер Авито</h1>
+    <p>Парсит квартиры и дома по аренде и продаже</p>
+
+    <div class="field-group">
+      <label class="field-label" for="cityInput">Город (slug Avito или на русском)</label>
+      <input id="cityInput" class="field-input" type="text" value="moskva" placeholder="moskva, sankt-peterburg, Москва">
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="propertyTypeInput">Тип недвижимости</label>
+      <select id="propertyTypeInput" class="field-input">
+        <option value="all" selected>Квартиры + Дома</option>
+        <option value="apartments">Только квартиры</option>
+        <option value="houses">Только дома</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="dealInput">Тип сделки</label>
+      <select id="dealInput" class="field-input">
+        <option value="all" selected>Аренда + Продажа</option>
+        <option value="rent">Только аренда</option>
+        <option value="sale">Только продажа</option>
+      </select>
+    </div>
+    <div class="field-grid">
+      <div class="field-group">
+        <label class="field-label" for="pageFromInput">Страница с</label>
+        <input id="pageFromInput" class="field-input" type="number" min="1" value="1" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="pageToInput">Страница по</label>
+        <input id="pageToInput" class="field-input" type="number" min="1" value="1" />
+      </div>
+    </div>
+    <p class="hint">За один запуск парсится не более <%= maxPages %> страниц (лимит безопасности).</p>
+    <div class="field-grid">
+      <div class="field-group">
+        <label class="field-label" for="minPriceInput">Цена от (₽)</label>
+        <input id="minPriceInput" class="field-input" type="number" min="0" placeholder="например 3000000" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="maxPriceInput">Цена до (₽)</label>
+        <input id="maxPriceInput" class="field-input" type="number" min="0" placeholder="например 15000000" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="minAreaInput">Площадь от (м²)</label>
+        <input id="minAreaInput" class="field-input" type="number" min="0" step="0.1" placeholder="например 40" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="maxAreaInput">Площадь до (м²)</label>
+        <input id="maxAreaInput" class="field-input" type="number" min="0" step="0.1" placeholder="например 180" />
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="roomsInput">Комнаты (через запятую)</label>
+      <input id="roomsInput" class="field-input" type="text" placeholder="например 1,2,3 или studio" />
+    </div>
+    <label class="checkbox-row" for="manualCaptchaInput">
+      <input id="manualCaptchaInput" type="checkbox">
+      Ручной режим капчи (открыть браузер Puppeteer)
+    </label>
+    <p class="hint">Если Avito блокирует IP, включи режим и пройди капчу в открывшемся окне браузера.</p>
+
+    <div class="button-group">
+      <button id="parseBtn" class="btn-parse" onclick="startParsing()">
+        Начать парсинг
+      </button>
+      <a href="/results" class="btn-results">Посмотреть результаты</a>
+    </div>
+
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
+    function startParsing() {
+      const parseBtn = document.getElementById('parseBtn');
+      const cityInput = document.getElementById('cityInput');
+      const propertyTypeInput = document.getElementById('propertyTypeInput');
+      const dealInput = document.getElementById('dealInput');
+      const pageFromInput = document.getElementById('pageFromInput');
+      const pageToInput = document.getElementById('pageToInput');
+      const minPriceInput = document.getElementById('minPriceInput');
+      const maxPriceInput = document.getElementById('maxPriceInput');
+      const minAreaInput = document.getElementById('minAreaInput');
+      const maxAreaInput = document.getElementById('maxAreaInput');
+      const roomsInput = document.getElementById('roomsInput');
+      const manualCaptchaInput = document.getElementById('manualCaptchaInput');
+      const city = cityInput.value.trim() || 'moskva';
+      const propertyType = propertyTypeInput.value || 'all';
+      const deal = dealInput.value || 'all';
+      const maxPagesPerRun = <%= maxPages %>;
+      const pageFrom = Math.max(1, Number.parseInt(pageFromInput.value || '1', 10) || 1);
+      let pageTo = Math.max(1, Number.parseInt(pageToInput.value || String(pageFrom), 10) || pageFrom);
+      if (pageTo < pageFrom) pageTo = pageFrom;
+      if (pageTo - pageFrom + 1 > maxPagesPerRun) {
+        pageTo = pageFrom + maxPagesPerRun - 1;
+      }
+      pageFromInput.value = String(pageFrom);
+      pageToInput.value = String(pageTo);
+      const pages = pageTo - pageFrom + 1;
+      const pageRangeLabel = pageFrom === pageTo ? `стр. ${pageFrom}` : `стр. ${pageFrom}-${pageTo}`;
+      const minPrice = minPriceInput.value.trim();
+      const maxPrice = maxPriceInput.value.trim();
+      const minArea = minAreaInput.value.trim();
+      const maxArea = maxAreaInput.value.trim();
+      const rooms = roomsInput.value.trim();
+      const propertyTypeLabels = {
+        all: 'квартиры + дома',
+        apartments: 'квартиры',
+        houses: 'дома'
+      };
+      const dealLabels = {
+        all: 'аренда + продажа',
+        rent: 'аренда',
+        sale: 'продажа'
+      };
+      const propertyTypeLabel = propertyTypeLabels[propertyType] || propertyType;
+      const dealLabel = dealLabels[deal] || deal;
+      const manualCaptcha = manualCaptchaInput.checked;
+      const statusDiv = document.getElementById('status');
+      parseBtn.disabled = true;
+      parseBtn.style.opacity = '0.7';
+      parseBtn.style.cursor = 'not-allowed';
+      cityInput.disabled = true;
+      cityInput.style.opacity = '0.7';
+      propertyTypeInput.disabled = true;
+      propertyTypeInput.style.opacity = '0.7';
+      dealInput.disabled = true;
+      dealInput.style.opacity = '0.7';
+      pageFromInput.disabled = true;
+      pageFromInput.style.opacity = '0.7';
+      pageToInput.disabled = true;
+      pageToInput.style.opacity = '0.7';
+      minPriceInput.disabled = true;
+      minPriceInput.style.opacity = '0.7';
+      maxPriceInput.disabled = true;
+      maxPriceInput.style.opacity = '0.7';
+      minAreaInput.disabled = true;
+      minAreaInput.style.opacity = '0.7';
+      maxAreaInput.disabled = true;
+      maxAreaInput.style.opacity = '0.7';
+      roomsInput.disabled = true;
+      roomsInput.style.opacity = '0.7';
+      manualCaptchaInput.disabled = true;
+      manualCaptchaInput.style.opacity = '0.7';
+      statusDiv.className = 'status loading';
+      statusDiv.innerHTML = manualCaptcha
+        ? `<span class="spinner"></span>Запускаю ручной режим капчи для <b>${city}</b> (${propertyTypeLabel}, ${dealLabel}, ${pageRangeLabel})...`
+        : `<span class="spinner"></span>Парсим данные для города: <b>${city}</b> (${propertyTypeLabel}, ${dealLabel}, ${pageRangeLabel})...`;
+
+      const params = new URLSearchParams({
+        city,
+        propertyType,
+        deal,
+        pageFrom: String(pageFrom),
+        pageTo: String(pageTo),
+        pages: String(pages),
+        manualCaptcha: manualCaptcha ? '1' : '0'
+      });
+      if (minPrice) params.set('minPrice', minPrice);
+      if (maxPrice) params.set('maxPrice', maxPrice);
+      if (minArea) params.set('minArea', minArea);
+      if (maxArea) params.set('maxArea', maxArea);
+      if (rooms) params.set('rooms', rooms);
+
+      fetch(`/parse?${params.toString()}`)
+        .then(async response => {
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || data.status === 'error') {
+            throw new Error(data.message || 'Ошибка парсинга');
+          }
+          return data;
+        })
+        .then(data => {
+          statusDiv.className = 'status success';
+          statusDiv.innerHTML = `✓ ${data.message}. Перейди в <a href="/results" style="color: inherit; font-weight: bold;">результаты</a>`;
+        })
+        .catch(error => {
+          statusDiv.className = 'status error';
+          statusDiv.innerHTML = '✗ Ошибка: ' + error.message;
+        })
+        .finally(() => {
+          parseBtn.disabled = false;
+          parseBtn.style.opacity = '1';
+          parseBtn.style.cursor = 'pointer';
+          cityInput.disabled = false;
+          cityInput.style.opacity = '1';
+          propertyTypeInput.disabled = false;
+          propertyTypeInput.style.opacity = '1';
+          dealInput.disabled = false;
+          dealInput.style.opacity = '1';
+          pageFromInput.disabled = false;
+          pageFromInput.style.opacity = '1';
+          pageToInput.disabled = false;
+          pageToInput.style.opacity = '1';
+          minPriceInput.disabled = false;
+          minPriceInput.style.opacity = '1';
+          maxPriceInput.disabled = false;
+          maxPriceInput.style.opacity = '1';
+          minAreaInput.disabled = false;
+          minAreaInput.style.opacity = '1';
+          maxAreaInput.disabled = false;
+          maxAreaInput.style.opacity = '1';
+          roomsInput.disabled = false;
+          roomsInput.style.opacity = '1';
+          manualCaptchaInput.disabled = false;
+          manualCaptchaInput.style.opacity = '1';
+        });
+    }
+  </script>
+</body>
+
+</html>

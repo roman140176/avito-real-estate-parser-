@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Результаты парсинга</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .header {
+      max-width: 1200px;
+      margin: 0 auto 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h1 {
+      color: #333;
+      font-size: 24px;
+    }
+
+    .btn-back {
+      padding: 10px 20px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-back:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .error {
+      background: #ffebee;
+      color: #c62828;
+      padding: 20px;
+      border-radius: 5px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .empty {
+      background: white;
+      padding: 40px;
+      border-radius: 5px;
+      text-align: center;
+      color: #999;
+    }
+
+    .stats {
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      border-left: 4px solid #667eea;
+    }
+
+    .stats p {
+      font-size: 16px;
+      color: #333;
+      margin: 5px 0;
+    }
+
+    .stats small {
+      color: #666;
+      font-size: 13px;
+    }
+
+    .stats a {
+      color: #5568d3;
+      word-break: break-all;
+    }
+
+    .count {
+      font-size: 28px;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .listings {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .listing {
+      background: white;
+      border-radius: 5px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .listing:hover {
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+      transform: translateY(-5px);
+    }
+
+    .listing-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+      line-height: 1.4;
+      flex-grow: 1;
+    }
+
+    .listing-price {
+      font-size: 20px;
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+
+    .listing-location {
+      font-size: 13px;
+      color: #999;
+      margin-bottom: 10px;
+    }
+
+    .listing-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #eef1ff;
+      color: #4456b0;
+      font-weight: 600;
+      border: 1px solid #d8defc;
+    }
+
+    .listing-id {
+      font-size: 12px;
+      color: #bbb;
+      margin-bottom: 15px;
+    }
+
+    .listing-link {
+      display: inline-block;
+      padding: 10px 15px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 3px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .listing-link:hover {
+      background: #5568d3;
+    }
+
+    .listing-link.disabled {
+      background: #c5cae9;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .download-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 24px;
+      background: #764ba2;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s ease;
+    }
+
+    .download-btn:hover {
+      background: #663a8a;
+      transform: translateY(-2px);
+    }
+
+    .download-btn.csv {
+      background: #2e7d32;
+      margin-left: 10px;
+    }
+
+    .download-btn.csv:hover {
+      background: #25642a;
+    }
+
+    .download-btn.excel {
+      background: #1565c0;
+      margin-left: 10px;
+    }
+
+    .download-btn.excel:hover {
+      background: #0f4ea0;
+    }
+
+    .listing-specs {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .listing-spec-line {
+      margin-bottom: 3px;
+    }
+
+    .filters {
+      background: white;
+      border-radius: 5px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      border-left: 4px solid #2e7d32;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .filters-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .filters-label {
+      font-size: 14px;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .filters-select {
+      border: 1px solid #d4d8e7;
+      border-radius: 5px;
+      padding: 8px 10px;
+      font-size: 14px;
+      min-width: 260px;
+      background: white;
+      color: #333;
+    }
+
+    .filters-info {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #666;
+    }
+
+    .filters-empty {
+      display: none;
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      text-align: center;
+      color: #999;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .listings {
+        grid-template-columns: 1fr;
+      }
+
+      .header {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>Результаты парсинга</h1>
+    <a href="/" class="btn-back">← Назад</a>
+  </div>
+
+  <div class="container">
+    <% if (error) { %>
+      <div class="error">
+        <p>
+          <%= error %>
+        </p>
+        <p>Сначала запусти парсинг на главной странице</p>
+      </div>
+      <% } else if (listings.length===0) { %>
+        <div class="empty">
+          <p>Нет данных для отображения</p>
+        </div>
+        <% } else { %>
+          <div class="stats">
+            <p>Всего найдено объявлений:</p>
+            <p class="count">
+              <%= listings.length %>
+            </p>
+            <% if (meta && meta.city) { %>
+              <p>Город: <b><%= meta.city %></b></p>
+            <% } %>
+            <% if (meta && meta.propertyLabel) { %>
+              <p>Тип недвижимости: <b><%= meta.propertyLabel %></b></p>
+            <% } %>
+            <% if (meta && meta.dealLabel) { %>
+              <p>Сделка: <b><%= meta.dealLabel %></b></p>
+            <% } %>
+            <% if (meta && meta.pageFrom && meta.pageTo) { %>
+              <p>Диапазон страниц: <b><%= meta.pageFrom %>-<%= meta.pageTo %></b></p>
+              <p>Страниц: <b><%= meta.pages %></b></p>
+            <% } else if (meta && meta.pages) { %>
+              <p>Страниц: <b><%= meta.pages %></b></p>
+            <% } %>
+            <% if (meta && meta.valueFilters) { %>
+              <% if (meta.valueFilters.minPrice !== null || meta.valueFilters.maxPrice !== null) { %>
+                <p>Цена: <b><%= meta.valueFilters.minPrice !== null ? meta.valueFilters.minPrice : '...' %></b> - <b><%= meta.valueFilters.maxPrice !== null ? meta.valueFilters.maxPrice : '...' %></b> ₽</p>
+              <% } %>
+              <% if (meta.valueFilters.minArea !== null || meta.valueFilters.maxArea !== null) { %>
+                <p>Площадь: <b><%= meta.valueFilters.minArea !== null ? meta.valueFilters.minArea : '...' %></b> - <b><%= meta.valueFilters.maxArea !== null ? meta.valueFilters.maxArea : '...' %></b> м²</p>
+              <% } %>
+              <% if (Array.isArray(meta.valueFilters.rooms) && meta.valueFilters.rooms.length) { %>
+                <p>Комнаты: <b><%= meta.valueFilters.rooms.join(', ') %></b></p>
+              <% } %>
+            <% } %>
+            <% if (meta && meta.savedAt) { %>
+              <p><small>Обновлено: <%= new Date(meta.savedAt).toLocaleString('ru-RU') %></small></p>
+            <% } %>
+            <% if (meta && Array.isArray(meta.sourceUrls) && meta.sourceUrls.length) { %>
+              <% meta.sourceUrls.forEach(url => { %>
+                <p><small>Источник: <a href="<%= url %>" target="_blank" rel="noopener noreferrer"><%= url %></a></small></p>
+              <% }); %>
+            <% } else if (meta && meta.sourceUrl) { %>
+              <p><small>Источник: <a href="<%= meta.sourceUrl %>" target="_blank" rel="noopener noreferrer"><%= meta.sourceUrl %></a></small></p>
+            <% } %>
+          </div>
+          <div class="buttons">
+            <button class="download-btn" onclick="downloadJSON()">
+              ⬇️ Скачать JSON
+            </button>
+            <a href="/download/csv" class="download-btn csv">
+              ⬇️ Скачать CSV
+            </a>
+            <a href="/download/excel" class="download-btn excel">
+              ⬇️ Скачать Excel
+            </a>
+          </div>
+
+          <div class="filters">
+            <div class="filters-row">
+              <label class="filters-label" for="districtSelect">Район:</label>
+              <select id="districtSelect" class="filters-select">
+                <option value="">Все районы</option>
+              </select>
+              <label class="filters-label" for="realtorSelect">Риэлтор:</label>
+              <select id="realtorSelect" class="filters-select">
+                <option value="">Все</option>
+                <option value="__owner__">От собственника</option>
+              </select>
+              <label class="filters-label" for="wallMaterialSelect">Материал стен:</label>
+              <select id="wallMaterialSelect" class="filters-select">
+                <option value="">Все</option>
+                <option value="__unknown__">Не указан</option>
+              </select>
+            </div>
+            <p class="filters-info">
+              Показано: <b><span id="visibleCount"><%= listings.length %></span></b> из <b><%= listings.length %></b>
+            </p>
+          </div>
+
+          <div id="districtNoResults" class="filters-empty">
+            По выбранным фильтрам объявления не найдены
+          </div>
+
+          <div class="listings">
+            <% listings.forEach(listing=> { %>
+              <div class="listing" data-location="<%= listing.location || '' %>" data-realtor="<%= listing.realtorName || '' %>" data-wall="<%= listing.wallMaterial || '' %>" data-details="<%= listing.details || '' %>">
+                <div class="listing-title">
+                  <%= listing.title %>
+                </div>
+                <div class="listing-price">
+                  <%= listing.price %>
+                </div>
+                <div class="listing-meta">
+                  <% if (listing.propertyLabel) { %>
+                    <span class="badge"><%= listing.propertyLabel %></span>
+                  <% } %>
+                  <% if (listing.dealLabel) { %>
+                    <span class="badge"><%= listing.dealLabel %></span>
+                  <% } %>
+                  <% if (listing.realtorName) { %>
+                    <span class="badge"><%= listing.realtorName %></span>
+                  <% } else { %>
+                    <span class="badge">От собственника</span>
+                  <% } %>
+                </div>
+                <div class="listing-specs">
+                  <% if (listing.rooms !== null && listing.rooms !== undefined) { %>
+                    <div class="listing-spec-line">
+                      Комнат: <%= listing.rooms === 0 ? 'студия' : listing.rooms %>
+                    </div>
+                  <% } %>
+                  <% if (listing.area !== null && listing.area !== undefined) { %>
+                    <div class="listing-spec-line">Площадь: <%= listing.area %> м²</div>
+                  <% } %>
+                  <div class="listing-spec-line">
+                    Год постройки: <%= listing.buildYear !== null && listing.buildYear !== undefined ? listing.buildYear : 'не указан' %>
+                  </div>
+                </div>
+                <div class="listing-location"><%= listing.location %>
+                </div>
+                <div class="listing-id">ID: <%= listing.id %>
+                </div>
+                <% if (listing.url && listing.url !== '#' && listing.url !== 'N/A') { %>
+                  <a href="<%= listing.url %>" target="_blank" rel="noopener noreferrer" class="listing-link">
+                    Открыть на Авито →
+                  </a>
+                <% } else { %>
+                  <span class="listing-link disabled">Ссылка недоступна</span>
+                <% } %>
+              </div>
+              <% }); %>
+          </div>
+          <% } %>
+  </div>
+
+  <script id="listings-data" type="application/json"><%- JSON.stringify(listings || []).replace(/</g, '\\u003c') %></script>
+
+  <script>
+    function normalizeText(value) {
+      return String(value || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function extractDistrict(location) {
+      const text = normalizeText(location);
+      if (!text) return 'Не указан';
+
+      const parts = text.split(',').map(normalizeText).filter(Boolean);
+      const districtPattern = /(?:^|\s)(?:р-?н|район|мкр|микрорайон|квартал|округ|пос\.?|поселок|посёлок|снт|дп|деревня|село|станица)(?:\s|$)/i;
+      const candidate = parts.find((part) => districtPattern.test(part));
+      return candidate || parts[0];
+    }
+
+    function extractWallMaterial(details) {
+      const text = normalizeText(details);
+      if (!text) return '';
+
+      const patterns = [
+        /(?:материал\s+стен|стены)\s*[:\-]\s*([^,.;]+)/i,
+        /стен[аы]\s*[:\-]\s*([^,.;]+)/i
+      ];
+
+      for (const pattern of patterns) {
+        const match = text.match(pattern);
+        if (!match) continue;
+        const value = normalizeText(match[1]);
+        if (value) return value;
+      }
+
+      return '';
+    }
+
+    function initResultFilters() {
+      const districtSelect = document.getElementById('districtSelect');
+      const realtorSelect = document.getElementById('realtorSelect');
+      const wallMaterialSelect = document.getElementById('wallMaterialSelect');
+      const cards = Array.from(document.querySelectorAll('.listing'));
+      const visibleCount = document.getElementById('visibleCount');
+      const emptyBlock = document.getElementById('districtNoResults');
+
+      if (!districtSelect || !realtorSelect || !wallMaterialSelect || cards.length === 0) return;
+
+      const districtCountMap = new Map();
+      const realtorCountMap = new Map();
+      const wallMaterialCountMap = new Map();
+      const wallMaterialLabelMap = new Map();
+      cards.forEach((card) => {
+        const district = extractDistrict(card.dataset.location || '');
+        const realtorRaw = normalizeText(card.dataset.realtor || '');
+        const realtorKey = realtorRaw || '__owner__';
+        const wallRaw =
+          normalizeText(card.dataset.wall || '') ||
+          extractWallMaterial(card.dataset.details || '');
+        const wallKey = wallRaw ? wallRaw.toLowerCase() : '__unknown__';
+        card.dataset.district = district;
+        card.dataset.realtorKey = realtorKey;
+        card.dataset.wallKey = wallKey;
+        districtCountMap.set(district, (districtCountMap.get(district) || 0) + 1);
+        realtorCountMap.set(realtorKey, (realtorCountMap.get(realtorKey) || 0) + 1);
+        wallMaterialCountMap.set(wallKey, (wallMaterialCountMap.get(wallKey) || 0) + 1);
+        if (!wallMaterialLabelMap.has(wallKey)) {
+          wallMaterialLabelMap.set(wallKey, wallRaw || 'Не указан');
+        }
+      });
+
+      const sortedDistricts = Array.from(districtCountMap.entries()).sort((a, b) =>
+        a[0].localeCompare(b[0], 'ru')
+      );
+
+      sortedDistricts.forEach(([district, count]) => {
+        const option = document.createElement('option');
+        option.value = district;
+        option.textContent = `${district} (${count})`;
+        districtSelect.appendChild(option);
+      });
+
+      const ownerCount = realtorCountMap.get('__owner__') || 0;
+      realtorSelect.options[1].textContent = `От собственника (${ownerCount})`;
+
+      const sortedRealtors = Array.from(realtorCountMap.entries())
+        .filter(([key]) => key !== '__owner__')
+        .sort((a, b) => a[0].localeCompare(b[0], 'ru'));
+
+      sortedRealtors.forEach(([name, count]) => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = `${name} (${count})`;
+        realtorSelect.appendChild(option);
+      });
+
+      const unknownCount = wallMaterialCountMap.get('__unknown__') || 0;
+      const unknownWallOption = wallMaterialSelect.querySelector('option[value="__unknown__"]');
+      if (unknownWallOption) {
+        unknownWallOption.textContent = `Не указан (${unknownCount})`;
+      }
+
+      const sortedWallMaterials = Array.from(wallMaterialCountMap.entries())
+        .filter(([key]) => key !== '__unknown__')
+        .sort((a, b) =>
+          (wallMaterialLabelMap.get(a[0]) || a[0]).localeCompare(
+            wallMaterialLabelMap.get(b[0]) || b[0],
+            'ru'
+          )
+        );
+
+      sortedWallMaterials.forEach(([key, count]) => {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = `${wallMaterialLabelMap.get(key) || key} (${count})`;
+        wallMaterialSelect.appendChild(option);
+      });
+
+      function applyFilters() {
+        const selectedDistrict = districtSelect.value;
+        const selectedRealtor = realtorSelect.value;
+        const selectedWallMaterial = wallMaterialSelect.value;
+        let shown = 0;
+
+        cards.forEach((card) => {
+          const matchesDistrict =
+            !selectedDistrict || card.dataset.district === selectedDistrict;
+          const matchesRealtor =
+            !selectedRealtor || card.dataset.realtorKey === selectedRealtor;
+          const matchesWallMaterial =
+            !selectedWallMaterial || card.dataset.wallKey === selectedWallMaterial;
+          const matches = matchesDistrict && matchesRealtor && matchesWallMaterial;
+          card.style.display = matches ? '' : 'none';
+          if (matches) shown += 1;
+        });
+
+        if (visibleCount) visibleCount.textContent = String(shown);
+        if (emptyBlock) emptyBlock.style.display = shown === 0 ? 'block' : 'none';
+      }
+
+      districtSelect.addEventListener('change', applyFilters);
+      realtorSelect.addEventListener('change', applyFilters);
+      wallMaterialSelect.addEventListener('change', applyFilters);
+      applyFilters();
+    }
+
+    function downloadJSON() {
+      const dataNode = document.getElementById('listings-data');
+      const data = JSON.parse(dataNode.textContent || '[]');
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'avito_data.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    document.addEventListener('DOMContentLoaded', initResultFilters);
+  </script>
+
+</body>
+
+</html>

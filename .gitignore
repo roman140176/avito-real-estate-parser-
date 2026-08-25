@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Runtime state: never commit browser sessions or scraped listings
+.local/
+data/*
+!data/.gitkeep
+
+# Generated exports and diagnostics
+*.csv
+*.xls
+*.log
+coverage/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,31 @@
+{
+  "name": "avito-real-estate-parser",
+  "version": "0.1.0",
+  "description": "Локальный инструмент для выгрузки объявлений о недвижимости с Авито.",
+  "license": "MIT",
+  "author": "Contributors",
+  "keywords": [
+    "avito",
+    "real-estate",
+    "parser",
+    "puppeteer"
+  ],
+  "type": "commonjs",
+  "main": "index.js",
+  "engines": {
+    "node": ">=20.18.0"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "start:captcha": "HEADLESS=false ALLOW_MANUAL_CAPTCHA=true CAPTCHA_WAIT_MS=300000 node index.js",
+    "test": "node --test",
+    "test:watch": "node --test --watch",
+    "check": "node --check index.js",
+    "audit:prod": "npm audit --omit=dev"
+  },
+  "dependencies": {
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "puppeteer": "^25.9.0"
+  }
+}
